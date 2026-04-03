@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Harmonium</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --wood-dark:    #3b1f0e;
+    --wood-mid:     #6b3a1f;
+    --wood-light:   #a0622a;
+    --gold:         #c9973a;
+    --gold-light:   #e8bf6a;
+    --ivory:        #f5ede0;
+    --ivory-shadow: #d4bfa0;
+    --ebony:        #1a1008;
+    --felt-red:     #8b1a1a;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--wood-dark);
+    background-image:
+      repeating-linear-gradient(92deg, transparent, transparent 2px, rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px),
+      repeating-linear-gradient(180deg, transparent, transparent 8px, rgba(0,0,0,0.08) 8px, rgba(0,0,0,0.08) 9px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 8px;
+    font-family: 'Crimson Text', serif;
+  }
+
+  .harmonium-shell {
+    width: 100%;
+    max-width: 880px;
+    background: linear-gradient(160deg, var(--wood-mid) 0%, var(--wood-dark) 60%);
+    border-radius: 18px 18px 12px 12px;
+    box-shadow:
+      0 0 0 3px var(--gold),
+      0 0 0 6px var(--wood-dark),
+      0 24px 60px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, var(--wood-dark) 0%, #2a1208 100%);
+    border-bottom: 3px solid var(--gold);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--gold-light);
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    white-space: nowrap;
+  }
+  .brand span { color: var(--ivory); font-style: italic; }
+
+  /* ── Mode Switch Button ── */
+  .mode-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(201,151,58,0.45);
+    border-radius: 999px;
+    padding: 5px 6px 5px 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mode-switch:hover { background: rgba(201,151,58,0.15); border-color: var(--gold); }
+  .mode-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--gold-light);
+    text-transform: uppercase;
+  }
+  .mode-icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    transition: transform 0.25s;
+  }
+  .mode-switch:active .mode-icon { transform: scale(0.88) rotate(15deg); }
+
+  /* ── Bellows ── */
+  .bellows {
+    height: 12px;
+    background: repeating-linear-gradient(90deg, var(--felt-red) 0px, var(--felt-red) 6px, #5a1010 6px, #5a1010 8px);
+    border-top: 2px solid #6a0f0f;
+    border-bottom: 2px solid #6a0f0f;
+    position: relative; overflow: hidden;
+  }
+  .bellows::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+    animation: bellowsShimmer 3s ease-in-out infinite;
+  }
+  @keyframes bellowsShimmer {
+    0%,100% { transform: translateX(-100%); }
+    50%      { transform: translateX(200%); }
+  }
+
+  /* ── Active note display ── */
+  .active-note-display {
+    height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .note-badge {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--wood-dark);
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 0.78rem;
+    padding: 2px 10px; border-radius: 20px;
+    animation: popIn 0.1s ease;
+  }
+  @keyframes popIn { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+
+  /* ── Keyboard section ── */
+  .keyboard-section {
+    background: linear-gradient(180deg, #1e0e06 0%, #150a04 100%);
+    padding: 16px 14px 14px;
+  }
+  .keyboard-label {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold); font-size: 0.68rem;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    text-align: center; margin-bottom: 10px; opacity: 0.7;
+  }
+  .keyboard-wrap {
+    background: #0d0603;
+    border-radius: 6px 6px 10px 10px;
+    padding: 8px 8px 0;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.8), 0 2px 0 var(--gold);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ══ PC MODE ══ */
+  #keyboard-pc {
+    position: relative;
+    height: 130px;
+    user-select: none;
+  }
+  .key-white {
+    width: 44px; height: 120px;
+    background: linear-gradient(180deg, #f0e8d8 0%, var(--ivory) 40%, #ede3d0 100%);
+    border: 1px solid #b8a888; border-top: none;
+    border-radius: 0 0 6px 6px;
+    margin-right: 2px; cursor: pointer;
+    position: absolute;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9);
+    transition: background 0.05s, transform 0.05s;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end; padding-bottom: 7px;
+  }
+  .key-white:hover { background: linear-gradient(180deg, #fff8ee 0%, #fdf6ec 40%, #f5ead6 100%); }
+  .key-white.active {
+    background: linear-gradient(180deg, #e8d4b0 0%, #d4c090 100%);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.2);
+    transform: translateY(2px);
+  }
+  .key-note { font-size: 0.58rem; color: var(--wood-mid); font-family: 'Playfair Display', serif; font-weight:700; }
+  .key-shortcut { font-size: 0.48rem; color: #999; margin-top: 1px; }
+
+  .key-black {
+    width: 28px; height: 76px;
+    background: linear-gradient(180deg, #2a1a0a 0%, var(--ebony) 60%, #0d0806 100%);
+    border-radius: 0 0 4px 4px;
+    position: absolute; top: 0; cursor: pointer; z-index: 2;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: background 0.05s, transform 0.05s;
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px;
+  }
+  .key-black:hover { background: linear-gradient(180deg, #3a2a10 0%, #1a1008 60%); }
+  .key-black.active {
+    background: linear-gradient(180deg, #4a3820 0%, #2a1a08 100%);
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.8);
+    transform: translateY(2px);
+  }
+  .key-black .key-shortcut { font-size: 0.42rem; color: rgba(255,255,255,0.3); }
+
+  /* ══ MOBILE MODE ══ */
+  #keyboard-mobile {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 8px;
+    user-select: none;
+  }
+  .mobile-row {
+    display: flex;
+    gap: 5px;
+  }
+
+  /* Black key buttons (top row) */
+  .mob-black {
+    flex: 1; min-width: 0; height: 52px;
+    background: linear-gradient(180deg, #2e1e0c 0%, #130d06 100%);
+    border: 1px solid rgba(201,151,58,0.25);
+    border-radius: 8px; cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: transform 0.07s, background 0.07s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .mob-black.spacer {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
+  }
+  .mob-black.active {
+    background: linear-gradient(180deg, #5a3a18 0%, #2a1808 100%);
+    transform: scale(0.93);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  }
+  .mob-black .mn { font-size: 0.65rem; font-family: 'Playfair Display', serif; font-weight:700; color: rgba(255,255,255,0.75); }
+  .mob-black .ms { font-size: 0.44rem; color: rgba(255,255,255,0.35); letter-spacing:0.05em; }
+
+  /* White key buttons (bottom row) */
+  .mob-white {
+    flex: 1; min-width: 0; height: 76px;
+    background: linear-gradient(180deg, #f8f0e0 0%, #e8d4b8 100%);
+    border: 1px solid #c0a880;
+    border-radius: 8px; cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end; padding-bottom: 9px; gap: 2px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.85);
+    transition: transform 0.07s, background 0.07s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .mob-white.active {
+    background: linear-gradient(180deg, #d8b870 0%, #c09850 100%);
+    transform: scale(0.93);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .mob-white .mn { font-size: 0.75rem; font-family: 'Playfair Display', serif; font-weight:700; color: var(--wood-mid); }
+  .mob-white .ms { font-size: 0.48rem; color: #aaa; letter-spacing: 0.04em; }
+
+  /* ── Controls ── */
+  .controls {
+    background: linear-gradient(180deg, var(--wood-mid) 0%, var(--wood-light) 100%);
+    background-image: repeating-linear-gradient(88deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 5px);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    border-top: 3px solid var(--gold);
+  }
+  .control-panel {
+    background: linear-gradient(160deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.1) 100%);
+    border: 1px solid rgba(201,151,58,0.3);
+    border-radius: 10px; padding: 12px 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .control-panel.full { grid-column: 1 / -1; }
+  .control-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold-light); font-size: 0.68rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .control-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(201,151,58,0.4), transparent);
+  }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--gold) var(--val,70%), rgba(0,0,0,0.4) var(--val,70%));
+    outline: none; cursor: pointer;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--gold-light), var(--gold));
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 0 2px rgba(201,151,58,0.3);
+    cursor: pointer;
+  }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-desc { color: var(--ivory-shadow); font-size: 0.85rem; }
+  .toggle { position: relative; width: 48px; height: 26px; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle-slider {
+    position: absolute; inset: 0; border-radius: 13px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(201,151,58,0.3);
+    cursor: pointer; transition: background 0.3s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 20px; height: 20px; left: 3px; top: 2px;
+    border-radius: 50%; background: var(--ivory-shadow);
+    transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .toggle input:checked + .toggle-slider { background: rgba(201,151,58,0.4); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(22px); background: var(--gold-light); }
+
+  .midi-status { display: flex; align-items: center; gap: 10px; color: var(--ivory-shadow); font-size: 0.85rem; }
+  .midi-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: #444;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.1); flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s;
+  }
+  .midi-dot.connected { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.6); animation: pulse 2s ease-in-out infinite; }
+  .midi-dot.playing   { background: var(--gold); box-shadow: 0 0 10px rgba(201,151,58,0.8); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+
+  .footer {
+    background: var(--wood-dark); border-top: 2px solid var(--gold);
+    padding: 8px 20px; text-align: center;
+    color: rgba(201,151,58,0.45); font-size: 0.62rem; letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 520px) {
+    .controls { grid-template-columns: 1fr; }
+    .control-panel.full { grid-column: 1; }
+    .brand { font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+<div class="harmonium-shell">
+
+  <div class="header">
+    <div class="brand">Web <span>Harmonium</span></div>
+    <button class="mode-switch" onclick="toggleMode()">
+      <span class="mode-label" id="modeLbl">📱 Mobile</span>
+      <div class="mode-icon" id="modeIcon">🖥️</div>
+    </button>
+  </div>
+
+  <div class="bellows"></div>
+
+  <div class="keyboard-section">
+    <div class="keyboard-label">— Keys —</div>
+    <div class="active-note-display" id="noteDisplay"></div>
+    <div class="keyboard-wrap">
+      <div id="keyboard-pc"></div>
+      <div id="keyboard-mobile"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-panel">
+      <div class="control-title">Volume</div>
+      <input type="range" id="volume" min="0" max="100" value="70" oninput="updateVolume(this.value)">
+    </div>
+    <div class="control-panel">
+      <div class="control-title">Reverb</div>
+      <div class="toggle-row">
+        <span class="toggle-desc">Room echo</span>
+        <label class="toggle">
+          <input type="checkbox" id="reverbToggle" onchange="toggleReverb(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="control-panel full">
+      <div class="control-title">MIDI Input</div>
+      <div class="midi-status">
+        <div class="midi-dot" id="midiDot"></div>
+        <span id="midiStatus">Checking for MIDI devices…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="footerHint"></div>
+</div>
+
+<script>
+/* ── Audio ── */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx, masterGain, reverbNode, dryGain, wetGain;
+let volume = 0.70;
+const activeOsc = {};
+
+function initAudio() {
+  if (ctx) return;
+  ctx = new AudioCtx();
+  masterGain = ctx.createGain(); masterGain.gain.value = volume;
+  dryGain = ctx.createGain(); dryGain.gain.value = 1;
+  wetGain = ctx.createGain(); wetGain.gain.value = 0;
+  reverbNode = ctx.createConvolver();
+  const len = ctx.sampleRate * 2.5, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 2.5);
+  }
+  reverbNode.buffer = buf;
+  dryGain.connect(masterGain);
+  reverbNode.connect(wetGain); wetGain.connect(masterGain);
+  masterGain.connect(ctx.destination);
+}
+
+function updateVolume(val) {
+  volume = val/100;
+  if (masterGain) masterGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.02);
+  document.getElementById('volume').style.setProperty('--val', val+'%');
+}
+function toggleReverb(on) {
+  if (!ctx) return;
+  dryGain.gain.setTargetAtTime(on?0.55:1, ctx.currentTime, 0.05);
+  wetGain.gain.setTargetAtTime(on?0.45:0, ctx.currentTime, 0.05);
+}
+
+function playNote(freq, id) {
+  initAudio(); if (activeOsc[id]) return;
+  const o1=ctx.createOscillator(), o2=ctx.createOscillator(), o3=ctx.createOscillator();
+  o1.type='sawtooth'; o1.frequency.value=freq;
+  o2.type='square';   o2.frequency.value=freq*2;
+  o3.type='triangle'; o3.frequency.value=freq*0.5;
+  const g1=ctx.createGain(); g1.gain.value=0.45;
+  const g2=ctx.createGain(); g2.gain.value=0.12;
+  const g3=ctx.createGain(); g3.gain.value=0.20;
+  const env=ctx.createGain();
+  env.gain.setValueAtTime(0, ctx.currentTime);
+  env.gain.linearRampToValueAtTime(1, ctx.currentTime+0.03);
+  const flt=ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=2800; flt.Q.value=1.2;
+  o1.connect(g1); o2.connect(g2); o3.connect(g3);
+  g1.connect(flt); g2.connect(flt); g3.connect(flt);
+  flt.connect(env); env.connect(dryGain); env.connect(reverbNode);
+  o1.start(); o2.start(); o3.start();
+  activeOsc[id]={o1,o2,o3,env};
+}
+function stopNote(id) {
+  const n=activeOsc[id]; if(!n) return;
+  n.env.gain.setTargetAtTime(0, ctx.currentTime, 0.08);
+  setTimeout(()=>{ try{n.o1.stop();n.o2.stop();n.o3.stop();}catch(e){} }, 400);
+  delete activeOsc[id];
+}
+
+/* ── Notes ── */
+const NOTES = [
+  {note:'C4', freq:261.63, type:'white', kb:'a'},
+  {note:'C#4',freq:277.18, type:'black', kb:'w'},
+  {note:'D4', freq:293.66, type:'white', kb:'s'},
+  {note:'D#4',freq:311.13, type:'black', kb:'e'},
+  {note:'E4', freq:329.63, type:'white', kb:'d'},
+  {note:'F4', freq:349.23, type:'white', kb:'f'},
+  {note:'F#4',freq:369.99, type:'black', kb:'t'},
+  {note:'G4', freq:392.00, type:'white', kb:'g'},
+  {note:'G#4',freq:415.30, type:'black', kb:'y'},
+  {note:'A4', freq:440.00, type:'white', kb:'h'},
+  {note:'A#4',freq:466.16, type:'black', kb:'u'},
+  {note:'B4', freq:493.88, type:'white', kb:'j'},
+  {note:'C5', freq:523.25, type:'white', kb:'k'},
+  {note:'C#5',freq:554.37, type:'black', kb:'o'},
+  {note:'D5', freq:587.33, type:'white', kb:'l'},
+  {note:'D#5',freq:622.25, type:'black', kb:'p'},
+  {note:'E5', freq:659.25, type:'white', kb:';'},
+  {note:'F5', freq:698.46, type:'white', kb:"'"},
+  {note:'F#5',freq:739.99, type:'black', kb:'['},
+  {note:'G5', freq:783.99, type:'white', kb:']'},
+];
+const kbMap={};
+NOTES.forEach(n=>{ kbMap[n.kb]=n; });
+
+/* ── Note display ── */
+const displayEl=document.getElementById('noteDisplay');
+const shownNotes=new Set();
+function showNote(n){shownNotes.add(n);renderNotes();}
+function hideNote(n){shownNotes.delete(n);renderNotes();}
+function renderNotes(){
+  displayEl.innerHTML=[...shownNotes].map(n=>`<span class="note-badge">${n}</span>`).join('');
+}
+
+/* ── Key actions ── */
+function startKey(n){
+  playNote(n.freq, n.note);
+  document.getElementById('pc-'+n.note)?.classList.add('active');
+  document.getElementById('mb-'+n.note)?.classList.add('active');
+  showNote(n.note);
+}
+function endKey(n){
+  stopNote(n.note);
+  document.getElementById('pc-'+n.note)?.classList.remove('active');
+  document.getElementById('mb-'+n.note)?.classList.remove('active');
+  hideNote(n.note);
+}
+
+/* ── Build PC keyboard ── */
+const pcEl=document.getElementById('keyboard-pc');
+const WHITE_W=46;
+function buildPC(){
+  pcEl.innerHTML='';
+  const whites=NOTES.filter(n=>n.type==='white');
+  const totalW=whites.length;
+  pcEl.style.cssText=`position:relative;height:130px;width:${totalW*WHITE_W}px;min-width:100%;`;
+
+  let wi=0;
+  const wPos={};
+  NOTES.forEach((n,i)=>{ if(n.type==='white') wPos[i]=wi++; });
+
+  NOTES.forEach((n,i)=>{
+    const el=document.createElement('div');
+    el.id='pc-'+n.note;
+    if(n.type==='white'){
+      el.className='key-white';
+      el.style.cssText=`left:${wPos[i]*WHITE_W}px;top:0;`;
+      el.innerHTML=`<span class="key-note">${n.note.replace(/\d/,'')}</span><span class="key-shortcut">${n.kb.toUpperCase()}</span>`;
+    } else {
+      el.className='key-black';
+      const pw=NOTES.slice(0,i).filter(x=>x.type==='white').length;
+      el.style.left=(pw*WHITE_W-16)+'px';
+      el.innerHTML=`<span class="key-shortcut">${n.kb.toUpperCase()}</span>`;
+    }
+    el.addEventListener('pointerdown', e=>{e.preventDefault();startKey(n);});
+    el.addEventListener('pointerup',   ()=>endKey(n));
+    el.addEventListener('pointerleave',()=>endKey(n));
+    pcEl.appendChild(el);
+  });
+}
+
+/* ── Build Mobile keyboard ── */
+const mbEl=document.getElementById('keyboard-mobile');
+function buildMobile(){
+  mbEl.innerHTML='';
+  const whites=NOTES.filter(n=>n.type==='white');
+
+  // Which white key has a black key after it?
+  const blackAfter={};
+  for(let i=0;i<NOTES.length-1;i++){
+    if(NOTES[i].type==='white' && NOTES[i+1].type==='black') blackAfter[NOTES[i].note]=NOTES[i+1];
+  }
+
+  const topRow=document.createElement('div'); topRow.className='mobile-row';
+  const botRow=document.createElement('div'); botRow.className='mobile-row';
+
+  whites.forEach(w=>{
+    // Top: black key or spacer
+    const blk=blackAfter[w.note];
+    const td=document.createElement('div');
+    if(blk){
+      td.className='mob-black';
+      td.id='mb-'+blk.note;
+      td.innerHTML=`<span class="mn">${blk.note.replace(/\d/,'')}</span><span class="ms">${blk.note}</span>`;
+      td.addEventListener('pointerdown',e=>{e.preventDefault();startKey(blk);});
+      td.addEventListener('pointerup',  ()=>endKey(blk));
+      td.addEventListener('pointerleave',()=>endKey(blk));
+    } else {
+      td.className='mob-black spacer';
+    }
+    topRow.appendChild(td);
+
+    // Bottom: white key
+    const wd=document.createElement('div');
+    wd.className='mob-white'; wd.id='mb-'+w.note;
+    wd.innerHTML=`<span class="mn">${w.note.replace(/\d/,'')}</span><span class="ms">${w.note}</span>`;
+    wd.addEventListener('pointerdown',e=>{e.preventDefault();startKey(w);});
+    wd.addEventListener('pointerup',  ()=>endKey(w));
+    wd.addEventListener('pointerleave',()=>endKey(w));
+    botRow.appendChild(wd);
+  });
+
+  mbEl.appendChild(topRow);
+  mbEl.appendChild(botRow);
+}
+
+/* ── Mode toggle ── */
+let isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints>0);
+
+function applyMode(){
+  const lbl=document.getElementById('modeLbl');
+  const icon=document.getElementById('modeIcon');
+  const footer=document.getElementById('footerHint');
+  if(isMobile){
+    pcEl.style.display='none';
+    mbEl.style.display='flex';
+    lbl.textContent='📱 Mobile';
+    icon.textContent='🖥️';
+    footer.textContent='TAP KEYS TO PLAY  ·  TAP 🖥️ TO SWITCH TO PC MODE';
+  } else {
+    pcEl.style.display='block';
+    mbEl.style.display='none';
+    lbl.textContent='🖥️ PC';
+    icon.textContent='📱';
+    footer.textContent='PRESS A S D F G H J K L KEYS TO PLAY  ·  TAP 📱 TO SWITCH BACK';
+  }
+}
+function toggleMode(){
+  isMobile=!isMobile;
+  applyMode();
+}
+
+buildPC();
+buildMobile();
+applyMode();
+document.getElementById('volume').style.setProperty('--val','70%');
+
+/* ── PC keyboard shortcuts ── */
+const held=new Set();
+document.addEventListener('keydown',e=>{
+  if(e.repeat||isMobile) return;
+  const n=kbMap[e.key.toLowerCase()];
+  if(!n||held.has(n.note)) return;
+  held.add(n.note); startKey(n);
+});
+document.addEventListener('keyup',e=>{
+  const n=kbMap[e.key.toLowerCase()];
+  if(!n) return; held.delete(n.note); endKey(n);
+});
+
+/* ── MIDI ── */
+const midiDot=document.getElementById('midiDot');
+const midiStatus=document.getElementById('midiStatus');
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function noteNumToName(m){return['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][m%12]+Math.floor(m/12-1);}
+
+if(navigator.requestMIDIAccess){
+  navigator.requestMIDIAccess().then(acc=>{
+    const upd=()=>{
+      const ins=[...acc.inputs.values()];
+      if(ins.length){midiDot.classList.add('connected');midiStatus.textContent='Connected: '+ins[0].name;}
+      else{midiDot.classList.remove('connected');midiStatus.textContent='No MIDI devices found';}
+    };
+    const attach=()=>{
+      [...acc.inputs.values()].forEach(inp=>{
+        inp.onmidimessage=({data})=>{
+          const[cmd,note,vel]=data,id='midi-'+note;
+          if((cmd&0xf0)===0x90&&vel>0){
+            initAudio();playNote(midiToFreq(note),id);
+            midiDot.classList.add('playing');showNote(noteNumToName(note));
+          } else if((cmd&0xf0)===0x80||((cmd&0xf0)===0x90&&vel===0)){
+            stopNote(id);midiDot.classList.remove('playing');hideNote(noteNumToName(note));
+          }
+        };
+      });
+    };
+    upd();attach();
+    acc.onstatechange=()=>{upd();attach();};
+  }).catch(()=>{midiStatus.textContent='MIDI access denied';});
+} else {
+  midiStatus.textContent='MIDI not supported in this browser';
+}
+</script>
+</body>
+</html>
